@@ -1,5 +1,5 @@
 %include "io64.inc"
-
+ 
 section .text
 global CMAIN
 CMAIN:
@@ -8,44 +8,52 @@ CMAIN:
     mov [target], ax
 L_loop:
     mov eax, 0
-    mov eax, [target]
+    mov edx, 0
+
+    mov eax, dword [target]
+    and eax, 0x0000ffff
+    
     mov edx, eax
     shr edx, 16
     and eax, 0x0000ffff
-
+ 
     mov ebx, 0
     mov bx, 2
     div bx
     
-    mov ebx, 0
-    mov bx, [remainder_index]
+    mov ebx, [remainder_index]
     mov [remainder + ebx * 2], dx
     add [remainder_index], word 1
-
+ 
     mov [target], ax
     cmp ax, 1
-    jne L_loop
-
-    ;print 
-    mov eax, 0
-    mov bx, [remainder_index]
+    jle L_loop_end
+    jmp L_loop
+L_loop_end:
+    ;print
+    PRINT_DEC 2, target
+    ;NEWLINE
     
-    PRINT_DEC 2, ax
-    NEWLINE
+    mov eax, 0
+    mov eax, [remainder_index]
+    dec eax
+    
 L_print_loop:
     PRINT_DEC 2, [remainder + eax * 2]
-    NEWLINE
-    inc ax
-
-    cmp ax, bx
-    jne L_print_loop
-
-L_end:
+    ;NEWLINE
+    add [print_count], word 1
+    
+    dec ax
+    mov bx, [print_count]
+    cmp bx, [remainder_index]
+    je L_end
+    jmp L_print_loop
+L_end: 
     xor rax,rax
     ret
 section .bss
     target resw 1
     remainder resw 100
-    quotient resw 1
 section .data
     remainder_index dw 0
+    print_count dw 0
